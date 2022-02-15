@@ -5,123 +5,92 @@
 /*                                                    +:+ +:+         +:+     */
 /*   By: amaarifa <amaarifa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2022/02/14 14:53:42 by amaarifa          #+#    #+#             */
-/*   Updated: 2022/02/15 10:26:25 by amaarifa         ###   ########.fr       */
+/*   Created: 2022/02/15 16:30:22 by amaarifa          #+#    #+#             */
+/*   Updated: 2022/02/15 18:06:39 by amaarifa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "pipex.h"
-/*
- 'ls -l -a -h' 
-*/
 
-char	**resolve_path(char **env)
+void	init_px(t_px px, char **av, int ac, int ps_num, char **env)
 {
-	int		i;
-	char	*s;
+	int	i;
 
+	if (strcmp(av[1], "here_doc"))
+		px.file[0] = open(av[1], O_RDONLY);
+	px.file[1] = open(av[ac - 1], O_RDWR | O_CREAT | O_TRUNC, 0777);
+	px.fd = (int **)malloc(sizeof(int *) * (ps_num - 1));
 	i = 0;
-	while (env[i])
+	while (i < ps_num - 1)
+		px.fd[i++] = (int *)malloc(sizeof(int) * 2);
+	px.cmd_args = (char ***)malloc(sizeof(int **) * ps_num);
+	i = 0;
+	while (i < ps_num)
 	{
-		if (ft_strlen(env[i]) > 4)
-		{
-			if (env[i][0] == 'P' && env[i][1] == 'A'
-				&& env[i][2] == 'T' && env[i][3] == 'H')
-			{
-				s = env[i] + 5;
-				return (ft_split(s, ':'));
-			}
-		}
+		if (strcmp(av[1], "here_doc"))
+			px.cmd_args[i] = resolve_cmd(av[i + 3], env);
+		else
+			px.cmd_args[i] = resolve_cmd(av[i + 2], env);
 		i++;
 	}
-	return (0);
+	px.pid = (int *)malloc(sizeof(int) * ps_num);
 }
 
-char	*get_right_path(char *command, char **path)
+void	ft_close(int **fd, int size, int *file)
 {
-	int		i;
-	char	*cmd;
-	char	*temp;
+	int 	i;
 
 	i = 0;
-	while (path[i])
+	while (i < size)
 	{
-		temp = ft_strjoin(path[i], "/");
-		cmd = ft_strjoin(temp, command);
-		free(temp);
-		if (access(cmd, 777) == 0)
-			return (cmd);
+		close(fd[i][0]);
+		close(fd[i][1]);
 		i++;
 	}
-	return (0);
-}
-
-char	**resolve_commands(char *command, char **env)
-{
-	char	**command_arg;
-	char	*full_path;
-	char	**path;
-
-	command_arg = ft_split(command, ' ');
-	path = resolve_path(env);
-	full_path = get_right_path(command_arg[0], path);
-	if (!full_path)
-	{
-		printf("Error\n");
-		exit(1);
-	}
-	command_arg[0] = full_path;
-	return (command_arg);
-}
-
-void	ft_close(int *fd, int *file)
-{
-	close(fd[0]);
-	close(fd[1]);
 	close(file[0]);
 	close(file[1]);
 }
-
 void	ft_dup(int in, int out)
 {
 	dup2(in, 0);
 	dup2(out, 1);
 }
-
-/*
-	1- TAKE THE IN FILE AND THE OUT FILE FROM ARGS
-	2- MAKE A PROCCES FOR EACH COMMAND
-*/
-
-int	main(int ac, char **av, char **env)
+int	main (int ac, char **av, char **env)
 {
-	char	**cmd_arg_one;
-	char	**cmd_arg_two;
-	int		fd[2];
-	int		file[2];
-	int		pid[2];
+	t_px	px;
+	int		i;
+	int		ps_num;
 
-	cmd_arg_one = resolve_commands(av[2], env);
-	cmd_arg_two = resolve_commands(av[3], env);
-	file[0] = open(av[1], O_RDONLY);
-	file[1] = open(av[4], O_RDWR | O_CREAT);
-	pipe(fd);
-	pid[0] = fork();
-	if (pid[0] == 0)
+	if (ac < 4)
+		return (0);
+	if (!strcmp(av[1], "here_doc"))
+		ps_num = ac - 4;
+	else
+		ps_num = ac - 3;
+	init_px(px, av, ac, ps_num, env);
+	i = 0;
+	while (i < ps_num - 1)
+		pipe(px.fd[i++]);
+	px.pid[0] = fork();
+	i = 0;
+	while (i < ps_num)
 	{
-		ft_dup(file[0], fd[1]);
-		ft_close(fd, file);
-		execve(cmd_arg_one[0], cmd_arg_one, env);
+		if (i != 0 && px.pid[i - 1] != 0)
+			px.pid[i] = fork();
+		if (px.pid[i] == 0)
+		{
+			if (i == 0)
+				ft_dup(px.file[0], px.fd[i][1]);
+			else if (i == ps_num - 1)
+				ft_dup(px.fd[i - 1][0], px.file[1]);
+			else
+				ft_dup(px.fd[i - 1][0], px.fd[i][1]);
+			ft_close(px.fd, ps_num - 1, px.file);
+			execve(px.cmd_args[i][0], px.cmd_args[i], env);
+		}
+		i++;
 	}
-	pid[1] = fork();
-	if (pid[1] == 0)
-	{
-		ft_dup(fd[0], file[1]);
-		ft_close(fd, file);
-		execve(cmd_arg_two[0], cmd_arg_two, env);
-	}
-	ft_close(fd, file);
-	waitpid(pid[0], NULL, 0);
-	waitpid(pid[1], NULL, 0);
+	ft_close(px.fd, ps_num - 1, px.file);
+	wait(NULL);
 	return (0);
 }

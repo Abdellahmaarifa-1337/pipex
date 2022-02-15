@@ -4,7 +4,9 @@ CFLAGS = -Wall -Werror -Wextra
 HELPERS_SRC = src/helpers/ft_split.c src/helpers/ft_strdup.c \
 				src/helpers/ft_strlen.c src/helpers/ft_substr.c \
 				src/helpers/ft_strjoin.c
-PIPEX_SRC = src/pipex.c ${HELPERS_SRC}
+UTILITIES_SRC = src/utilities/resolve_cmd.c
+
+PIPEX_SRC = src/pipex.c ${HELPERS_SRC} ${UTILITIES_SRC}
 
 PIPEX_OBJ = ${PIPEX_SRC:.c=.o}
 NAME = pipex
