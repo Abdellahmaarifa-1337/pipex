@@ -6,7 +6,7 @@
 /*   By: amaarifa <amaarifa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/02/14 14:38:44 by amaarifa          #+#    #+#             */
-/*   Updated: 2022/02/15 18:03:11 by amaarifa         ###   ########.fr       */
+/*   Updated: 2022/02/15 18:54:09 by amaarifa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -34,5 +34,5 @@ char	*ft_strjoin(char const *s1, char const *s2);
 
 /* utilities */
 char	**resolve_cmd(char *command, char **env);
-
+char	*get_next_line(int fd, int buffer_size);
 #endif
