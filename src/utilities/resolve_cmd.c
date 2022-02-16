@@ -6,7 +6,7 @@
 /*   By: amaarifa <amaarifa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/02/15 17:07:45 by amaarifa          #+#    #+#             */
-/*   Updated: 2022/02/15 17:08:23 by amaarifa         ###   ########.fr       */
+/*   Updated: 2022/02/16 14:11:25 by amaarifa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -64,7 +64,7 @@ char	**resolve_cmd(char *command, char **env)
 	full_path = get_right_path(command_arg[0], path);
 	if (!full_path)
 	{
-		printf("Error\n");
+		printf("command not found: %s\n",command_arg[0]);
 		exit(1);
 	}
 	command_arg[0] = full_path;

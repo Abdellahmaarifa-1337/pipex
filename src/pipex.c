@@ -6,22 +6,42 @@
 /*   By: amaarifa <amaarifa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/02/15 16:30:22 by amaarifa          #+#    #+#             */
-/*   Updated: 2022/02/15 19:32:12 by amaarifa         ###   ########.fr       */
+/*   Updated: 2022/02/16 14:16:20 by amaarifa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "pipex.h"
-
+#include <errno.h>
 void	init_px(t_px *px, char **av, int ac, int ps_num, char **env)
 {
 	int	i;
 
 	if (strcmp(av[1], "here_doc"))
+	{
 		(*px).file[0] = open(av[1], O_RDONLY);
-	(*px).file[1] = open(av[ac - 1], O_RDWR | O_CREAT | O_TRUNC, 0777);
-	(*px).fd = (int **)malloc(sizeof(int *) * (ps_num - 1));
+		if ((*px).file[0] == -1)
+		{
+			perror(0);
+			exit(1);
+		}
+		(*px).file[1] = open(av[ac - 1], O_RDWR | O_CREAT | O_TRUNC, 0777);
+		if ((*px).file[1] == -1)
+		{
+			perror(0);
+			exit(1);
+		}
+	} else 
+	{
+		(*px).file[1] = open(av[ac - 1], O_RDWR | O_CREAT | O_APPEND, 0777);
+		if ((*px).file[1] == -1)
+		{
+			perror(0);
+			exit(1);
+		}
+	}
+	(*px).fd = (int **)malloc(sizeof(int *) * (ps_num));
 	i = 0;
-	while (i < ps_num - 1)
+	while (i < ps_num)
 		(*px).fd[i++] = (int *)malloc(sizeof(int) * 2);
 	(*px).cmd_args = (char ***)malloc(sizeof(int **) * ps_num);
 	i = 0;
@@ -47,8 +67,10 @@ void	ft_close(int **fd, int size, int *file)
 		close(fd[i][1]);
 		i++;
 	}
-	close(file[0]);
-	close(file[1]);
+	if (file[0] && file[0] != 1)
+		close(file[0]);
+	if (file[1] && file[1] != 1)
+		close(file[1]);
 }
 void	ft_dup(int in, int out)
 {
@@ -61,6 +83,7 @@ int	main (int ac, char **av, char **env)
 	int		i;
 	int		ps_num;
 	char 	*line;
+	char	*temp;
 
 	if (ac < 4)
 		return (0);
@@ -70,49 +93,52 @@ int	main (int ac, char **av, char **env)
 		ps_num = ac - 3;
 	init_px(&px, av, ac, ps_num, env);
 	i = -1;
-	while (++i < ps_num - 1)
+	while (++i < ps_num)
 		pipe(px.fd[i]);
-
-	px.pid[0] = fork();
 	i = 0;
-	if (px.pid[0] != 0)
+	if (!strcmp(av[1], "here_doc"))
 	{
-		if (strcmp(av[1], "here_doc"))
-			ft_dup(px.file[0], px.fd[i][1]);
-		else 
+		
+		line = get_next_line(0, 100);
+		//write(2, ">", 1);
+		//printf("line %s %s\n", line, ft_strjoin(av[2], "\n"));
+		while (line && strcmp(line, ft_strjoin(av[2], "\n")))
 		{
-			line = get_next_line(0, 100);
-			while (line && strcmp(line, av[1]))
-			{
-				line = get_next_line(0, 100);
-				if(!line)
-					break;
-				write(px.fd[i][1], &line, strlen(line));
-			}
-			
+			temp = get_next_line(0, 100);
+			if(!temp || !strcmp(temp, ft_strjoin(av[2], "\n")))
+				break ;
+			line = ft_strjoin(line, temp);
+			free(temp);
 		}
+		write(px.fd[i][1], line, strlen(line));
 	}
+	else 
+	{
+		px.fd[i][0] = px.file[0];
+		//ft_dup(px.file[0], px.fd[i][1]);
+	}
+	i = 0;
 	while (i < ps_num)
 	{
-		if (i != 0 && px.pid[i - 1] != 0)
-			px.pid[i] = fork();								
+		px.pid[i] = fork();								
 		if (px.pid[i] == 0)
 		{
-			if (i == 0)
+			if (i == ps_num - 1)
 			{
-				
-				
+				ft_dup(px.fd[i][0], px.file[1]);
 			}
-			else if (i == ps_num - 1)
-				ft_dup(px.fd[i - 1][0], px.file[1]);
 			else
-				ft_dup(px.fd[i - 1][0], px.fd[i][1]);
-			ft_close(px.fd, ps_num - 1, px.file);
+			{
+				ft_dup(px.fd[i][0], px.fd[i + 1][1]);
+			}
+			ft_close(px.fd, ps_num, px.file);
 			execve(px.cmd_args[i][0], px.cmd_args[i], env);
+			perror(0);
+			exit(0);
 		}
 		i++;
 	}
-	ft_close(px.fd, ps_num - 1, px.file);
+	ft_close(px.fd, ps_num, px.file);
 	wait(NULL);
 	return (0);
 }
