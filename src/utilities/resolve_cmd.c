@@ -6,7 +6,7 @@
 /*   By: amaarifa <amaarifa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/02/15 17:07:45 by amaarifa          #+#    #+#             */
-/*   Updated: 2022/02/16 14:11:25 by amaarifa         ###   ########.fr       */
+/*   Updated: 2022/02/17 20:29:53 by amaarifa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -41,14 +41,24 @@ char	*get_right_path(char *command, char **path)
 	char	*temp;
 
 	i = 0;
-	while (path[i])
+	if (ft_strchr(command, '/'))
 	{
-		temp = ft_strjoin(path[i], "/");
-		cmd = ft_strjoin(temp, command);
-		free(temp);
-		if (access(cmd, 777) == 0)
-			return (cmd);
-		i++;
+		if (access(command, F_OK | X_OK) == 0)
+			throw_error(0);
+		else
+			return (command);
+	}
+	else
+	{
+		while (path[i])
+		{
+			temp = ft_strjoin(path[i], "/");
+			cmd = ft_strjoin(temp, command);
+			free(temp);
+			if (access(cmd, F_OK | X_OK) == 0)
+				return (cmd);
+			i++;
+		}
 	}
 	return (0);
 }
@@ -58,13 +68,16 @@ char	**resolve_cmd(char *command, char **env)
 	char	**command_arg;
 	char	*full_path;
 	char	**path;
+	char	*s;
 
 	command_arg = ft_split(command, ' ');
 	path = resolve_path(env);
 	full_path = get_right_path(command_arg[0], path);
+	printf("%s\n", full_path);
 	if (!full_path)
 	{
-		printf("command not found: %s\n",command_arg[0]);
+		s = ft_strjoin("command not found:", ft_strjoin(command_arg[0], "\n"));
+		write(2, s, ft_strlen(s));	
 		exit(1);
 	}
 	command_arg[0] = full_path;

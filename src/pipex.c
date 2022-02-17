@@ -6,55 +6,12 @@
 /*   By: amaarifa <amaarifa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/02/15 16:30:22 by amaarifa          #+#    #+#             */
-/*   Updated: 2022/02/16 14:16:20 by amaarifa         ###   ########.fr       */
+/*   Updated: 2022/02/17 22:09:45 by amaarifa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "pipex.h"
 #include <errno.h>
-void	init_px(t_px *px, char **av, int ac, int ps_num, char **env)
-{
-	int	i;
-
-	if (strcmp(av[1], "here_doc"))
-	{
-		(*px).file[0] = open(av[1], O_RDONLY);
-		if ((*px).file[0] == -1)
-		{
-			perror(0);
-			exit(1);
-		}
-		(*px).file[1] = open(av[ac - 1], O_RDWR | O_CREAT | O_TRUNC, 0777);
-		if ((*px).file[1] == -1)
-		{
-			perror(0);
-			exit(1);
-		}
-	} else 
-	{
-		(*px).file[1] = open(av[ac - 1], O_RDWR | O_CREAT | O_APPEND, 0777);
-		if ((*px).file[1] == -1)
-		{
-			perror(0);
-			exit(1);
-		}
-	}
-	(*px).fd = (int **)malloc(sizeof(int *) * (ps_num));
-	i = 0;
-	while (i < ps_num)
-		(*px).fd[i++] = (int *)malloc(sizeof(int) * 2);
-	(*px).cmd_args = (char ***)malloc(sizeof(int **) * ps_num);
-	i = 0;
-	while (i < ps_num)
-	{
-		if (!strcmp(av[1], "here_doc"))
-			(*px).cmd_args[i] = resolve_cmd(av[i + 3], env);
-		else
-			(*px).cmd_args[i] = resolve_cmd(av[i + 2], env);
-		i++;
-	}
-	(*px).pid = (int *)malloc(sizeof(int) * ps_num);
-}
 
 void	ft_close(int **fd, int size, int *file)
 {
@@ -72,36 +29,23 @@ void	ft_close(int **fd, int size, int *file)
 	if (file[1] && file[1] != 1)
 		close(file[1]);
 }
+
 void	ft_dup(int in, int out)
 {
 	dup2(in, 0);
 	dup2(out, 1);
 }
-int	main (int ac, char **av, char **env)
+
+void	set_in_out(t_px *px, char **av, int here_doc)
 {
-	t_px	px;
 	int		i;
-	int		ps_num;
-	char 	*line;
+	char	*line;
 	char	*temp;
 
-	if (ac < 4)
-		return (0);
-	if (!strcmp(av[1], "here_doc"))
-		ps_num = ac - 4;
-	else
-		ps_num = ac - 3;
-	init_px(&px, av, ac, ps_num, env);
-	i = -1;
-	while (++i < ps_num)
-		pipe(px.fd[i]);
 	i = 0;
-	if (!strcmp(av[1], "here_doc"))
+	if (here_doc)
 	{
-		
 		line = get_next_line(0, 100);
-		//write(2, ">", 1);
-		//printf("line %s %s\n", line, ft_strjoin(av[2], "\n"));
 		while (line && strcmp(line, ft_strjoin(av[2], "\n")))
 		{
 			temp = get_next_line(0, 100);
@@ -110,35 +54,73 @@ int	main (int ac, char **av, char **env)
 			line = ft_strjoin(line, temp);
 			free(temp);
 		}
-		write(px.fd[i][1], line, strlen(line));
+		write((*px).fd[i][1], line, strlen(line));
 	}
 	else 
-	{
-		px.fd[i][0] = px.file[0];
-		//ft_dup(px.file[0], px.fd[i][1]);
-	}
+		(*px).fd[i][0] = (*px).file[0];
+}
+
+void	pip_cmd(t_px *px, int ps_num, char **env, char **av)
+{
+	int		i;
+	int		here_doc;
+	char	**resloved_cmd;
+	here_doc = !strcmp(av[1], "here_doc");
 	i = 0;
 	while (i < ps_num)
 	{
-		px.pid[i] = fork();								
-		if (px.pid[i] == 0)
+		(*px).pid[i] = fork();						
+		if ((*px).pid[i] == 0)
 		{
 			if (i == ps_num - 1)
-			{
-				ft_dup(px.fd[i][0], px.file[1]);
-			}
+				ft_dup((*px).fd[i][0], (*px).file[1]);
 			else
-			{
-				ft_dup(px.fd[i][0], px.fd[i + 1][1]);
-			}
-			ft_close(px.fd, ps_num, px.file);
-			execve(px.cmd_args[i][0], px.cmd_args[i], env);
+				ft_dup((*px).fd[i][0], (*px).fd[i + 1][1]);
+			ft_close((*px).fd, ps_num, (*px).file);
+			if (here_doc)
+				resloved_cmd = resolve_cmd(av[i + 3], env);
+			else
+				resloved_cmd = resolve_cmd(av[i + 2], env);
+			execve(resloved_cmd[0], resloved_cmd, env);
+			ft_close((*px).fd, ps_num, (*px).file);
+
 			perror(0);
 			exit(0);
 		}
 		i++;
 	}
-	ft_close(px.fd, ps_num, px.file);
-	wait(NULL);
+	ft_close((*px).fd, ps_num, (*px).file);
+	i = 0;
+	while(i++ < ps_num)
+		wait(NULL);
+}
+
+int	main (int ac, char **av, char **env)
+{
+	t_px	px;
+	int		i;
+	int		ps_num;
+	int		here_doc;
+
+	here_doc = !strcmp(av[1], "here_doc");
+	if (!here_doc && ac < 5)
+		throw_error("Erorr : You have to provide at least 4 args\n");
+	else if(here_doc && ac < 6)
+		throw_error("Erorr : You have to provide at least 5 args\n");
+	if (here_doc)
+		ps_num = ac - 4;
+	else
+		ps_num = ac - 3;
+	init_file(&px, av, ac);
+	init_fd(&px, ps_num);
+	//init_cmd(&px, ps_num, av, env);
+	px.pid = (int *)malloc(sizeof(int) * ps_num);
+	if (!px.pid)
+		throw_error(0);
+	i = -1;
+	while (++i < ps_num)
+		pipe(px.fd[i]);
+	set_in_out(&px, av, here_doc);
+	pip_cmd(&px, ps_num, env, av);
 	return (0);
 }
