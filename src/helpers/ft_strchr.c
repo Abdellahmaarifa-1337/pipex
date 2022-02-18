@@ -6,10 +6,9 @@
 /*   By: amaarifa <amaarifa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/11/01 17:23:04 by amaarifa          #+#    #+#             */
-/*   Updated: 2022/02/17 19:24:51 by amaarifa         ###   ########.fr       */
+/*   Updated: 2022/02/18 19:41:59 by amaarifa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
-
 
 char	*ft_strchr(const char *s, int c)
 {

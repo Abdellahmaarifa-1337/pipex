@@ -6,7 +6,7 @@
 /*   By: amaarifa <amaarifa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/02/15 17:07:45 by amaarifa          #+#    #+#             */
-/*   Updated: 2022/02/17 20:29:53 by amaarifa         ###   ########.fr       */
+/*   Updated: 2022/02/18 19:40:22 by amaarifa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -44,9 +44,9 @@ char	*get_right_path(char *command, char **path)
 	if (ft_strchr(command, '/'))
 	{
 		if (access(command, F_OK | X_OK) == 0)
-			throw_error(0);
-		else
 			return (command);
+		else
+			throw_error(0);
 	}
 	else
 	{
@@ -73,11 +73,10 @@ char	**resolve_cmd(char *command, char **env)
 	command_arg = ft_split(command, ' ');
 	path = resolve_path(env);
 	full_path = get_right_path(command_arg[0], path);
-	printf("%s\n", full_path);
 	if (!full_path)
 	{
 		s = ft_strjoin("command not found:", ft_strjoin(command_arg[0], "\n"));
-		write(2, s, ft_strlen(s));	
+		write(2, s, ft_strlen(s));
 		exit(1);
 	}
 	command_arg[0] = full_path;
