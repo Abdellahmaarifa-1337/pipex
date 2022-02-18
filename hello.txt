@@ -1,4 +1,0 @@
-The is a test file created by nixCrft for demo purpose.
-bar is good.
-bar is nice.
-I love bar.
