@@ -6,7 +6,7 @@
 /*   By: amaarifa <amaarifa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/02/15 17:07:45 by amaarifa          #+#    #+#             */
-/*   Updated: 2022/02/18 19:40:22 by amaarifa         ###   ########.fr       */
+/*   Updated: 2022/02/19 17:02:18 by amaarifa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -75,10 +75,16 @@ char	**resolve_cmd(char *command, char **env)
 	full_path = get_right_path(command_arg[0], path);
 	if (!full_path)
 	{
-		s = ft_strjoin("command not found:", ft_strjoin(command_arg[0], "\n"));
+		full_path = ft_strjoin(command_arg[0], "\n");
+		s = ft_strjoin("command not found:", full_path);
+		free(full_path);
 		write(2, s, ft_strlen(s));
+		free(s);
+		free_arr(path);
+		free_arr(command_arg);
 		exit(1);
 	}
 	command_arg[0] = full_path;
+	free_arr(path);
 	return (command_arg);
 }

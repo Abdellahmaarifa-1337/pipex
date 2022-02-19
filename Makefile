@@ -10,12 +10,17 @@ UTILITIES_SRC = src/utilities/resolve_cmd.c \
 				src/helpers/get_next_line.c \
 				src/utilities/init_px.c \
 				src/utilities/throw_error.c \
-				src/utilities/ft_close.c
+				src/utilities/ft_close.c \
+				src/utilities/pipe.c \
+				src/utilities/ft_dup.c \
+				src/utilities/free_arr.c
 
 PIPEX_SRC = src/pipex.c ${HELPERS_SRC} ${UTILITIES_SRC}
 
 PIPEX_OBJ = ${PIPEX_SRC:.c=.o}
+
 NAME = pipex
+
 .c.o:
 	${CC}  -c $< -o $@
 
@@ -33,4 +38,4 @@ clean:
 fclean: clean
 	rm -rf ${NAME}
 
-.PHONY: all clean fclean
+.PHONY: all bonus clean fclean

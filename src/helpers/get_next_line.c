@@ -6,7 +6,7 @@
 /*   By: amaarifa <amaarifa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/11/24 11:44:57 by amaarifa          #+#    #+#             */
-/*   Updated: 2022/02/18 19:42:43 by amaarifa         ###   ########.fr       */
+/*   Updated: 2022/02/19 17:16:13 by amaarifa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -71,7 +71,7 @@ char	*get_next_line(int fd, int buffer_size)
 		return (0);
 	buf = (char *)malloc(sizeof(char) * (buffer_size + 1));
 	if (!buf)
-		return (0);
+		throw_error(0);
 	if (!s)
 		s = ft_strdup("");
 	read_line(fd, &buf, &s, buffer_size);

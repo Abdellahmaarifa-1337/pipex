@@ -6,7 +6,7 @@
 /*   By: amaarifa <amaarifa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/08/22 09:04:25 by amaarifa          #+#    #+#             */
-/*   Updated: 2022/02/14 16:39:55 by amaarifa         ###   ########.fr       */
+/*   Updated: 2022/02/19 17:16:54 by amaarifa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -20,7 +20,7 @@ char	*ft_strdup(const char	*src)
 	i = 0;
 	p = (char *)(malloc(sizeof(char) * (ft_strlen(src) + 1)));
 	if (p == NULL)
-		return (NULL);
+		throw_error(0);
 	while (src[i])
 	{
 		p[i] = src[i];

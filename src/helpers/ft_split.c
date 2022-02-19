@@ -6,7 +6,7 @@
 /*   By: amaarifa <amaarifa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/08/24 14:22:57 by amaarifa          #+#    #+#             */
-/*   Updated: 2022/02/14 16:38:17 by amaarifa         ###   ########.fr       */
+/*   Updated: 2022/02/19 17:15:26 by amaarifa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -83,9 +83,9 @@ char	**ft_split(char const *s, char c)
 	size = size_of_words(s, c);
 	p = (char **)malloc(sizeof(char *) * (size + 1));
 	if (!p)
-		return (0);
+		throw_error(0);
 	if (!fill(s, c, p, size))
-		return (0);
+		throw_error(0);
 	p[size] = 0;
 	return (p);
 }
